@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <!-- Tests 始终用 AddSource，物理文件由 Unity 生成 -->
+    <PropertyGroup>
+        <GenerateMode>AddSource</GenerateMode>
+    </PropertyGroup>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="GenerateMode" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Include="xunit" Version="2.6.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
+        <!-- 生成器测试辅助库 -->
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" Version="1.1.1" />
+        <!-- Level6 依赖 DLL：Scriban + System.Text.Json 需作为 Analyzer 加载，否则 test host 找不到 -->
+        <PackageReference Include="Scriban" Version="5.12.0" GeneratePathProperty="true">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>build</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="System.Text.Json" Version="6.0.0" GeneratePathProperty="true">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>build</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- 包含 game 源文件让所有生成器能处理，Release 时生成物理 .g.cs -->
+    <ItemGroup>
+        <ProjectReference Include="..\Core\Core.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="../../game/Assets/Showcase/Level0/*.cs" Exclude="../../game/Assets/Showcase/Level0/*.g.cs" Link="Level0/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level1/*.cs" Exclude="../../game/Assets/Showcase/Level1/*.g.cs" Link="Level1/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level2/*.cs" Exclude="../../game/Assets/Showcase/Level2/*.g.cs" Link="Level2/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level3/*.cs" Exclude="../../game/Assets/Showcase/Level3/*.g.cs" Link="Level3/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level4/*.cs" Exclude="../../game/Assets/Showcase/Level4/*.g.cs" Link="Level4/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level5/*.cs" Exclude="../../game/Assets/Showcase/Level5/*.g.cs" Link="Level5/%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level6/**/*.cs" Exclude="../../game/Assets/Showcase/Level6/**/*.g.cs" Link="Level6/%(RecursiveDir)%(Filename)%(Extension)" />
+        <Compile Include="../../game/Assets/Showcase/Level7/*.cs" Exclude="../../game/Assets/Showcase/Level7/*.g.cs" Link="Level7/%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Level0.Logger\Level0.Logger.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level1.AutoProperty\Level1.AutoProperty.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level2.AutoImplement\Level2.AutoImplement.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level3.MathType\Level3.MathType.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level4.AutoService\Level4.AutoService.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level5.EventInterface\Level5.EventInterface.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level6.EventExecute\Level6.EventExecute.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Level7.ModuleMesh\Level7.ModuleMesh.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <!-- Level6 依赖 DLL 作为 Analyzer 加载 -->
+        <Analyzer Include="$(PkgScriban)/lib/netstandard2.0/Scriban.dll" />
+        <Analyzer Include="$(PkgSystem_Text_Json)/lib/netstandard2.0/System.Text.Json.dll" />
+    </ItemGroup>
+
+</Project>

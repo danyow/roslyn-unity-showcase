@@ -1,0 +1,26 @@
+# ===== dotnet =====
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# ===== Unity =====
+game/Library/
+game/Temp/
+game/Logs/
+game/UserSettings/
+game/MemoryCaptures/
+game/Recordings/
+game/obj/
+game/*.csproj
+game/*.sln
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.idea/
+*.swp
+*~

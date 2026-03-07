@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <NoWarn>$(NoWarn);RS1035</NoWarn>
+        <RootNamespace>Showcase.Generator.Level1</RootNamespace>
+        <AssemblyName>Showcase.Level1.AutoProperty</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\SourceGenerator.Infrastructure\GeneratorConfig.cs">
+            <Link>Infrastructure\GeneratorConfig.cs</Link>
+        </Compile>
+        <Compile Include="..\SourceGenerator.Infrastructure\FileWriter.cs">
+            <Link>Infrastructure\FileWriter.cs</Link>
+        </Compile>
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Copy SourceFiles="$(TargetDir)$(AssemblyName).dll"
+              DestinationFolder="$(ProjectDir)../../game/Assets/Generators/Level1.AutoProperty/"
+              ContinueOnError="false" />
+    </Target>
+
+</Project>

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "idle",
+    "onPlay": []
+  },
+  {
+    "id": "attack",
+    "onPlay": [
+      {
+        "$type": "GlobalEvent",
+        "method": "Trigger",
+        "args": [
+          [
+            "delay",
+            {
+              "$type": "FloatValue",
+              "value": 0.5
+            }
+          ],
+          [
+            "force",
+            {
+              "$type": "BoolValue",
+              "value": true
+            }
+          ]
+        ],
+        "refId": "game_over_event"
+      }
+    ]
+  }
+]
