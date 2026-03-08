@@ -117,8 +117,12 @@ public class EventExecuteGenerator : IIncrementalGenerator
         if (symbol == null) return null;
 
         // 检查是否标记了 AutoEventExecuteAttribute
+        // 注意：必须过滤到当前语法树中声明的属性，避免 partial class 跨文件时重复生成
         foreach (var attr in symbol.GetAttributes())
         {
+            if (attr.ApplicationSyntaxReference?.SyntaxTree != classDecl.SyntaxTree)
+                continue;
+
             var attrName = attr.AttributeClass?.Name;
             if (attrName == AttributeFullName || attrName == AttributeShortName)
             {
