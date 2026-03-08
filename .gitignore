@@ -21,6 +21,6 @@ game/*.sln
 Thumbs.db
 
 # ===== IDE =====
-.idea/
+# .idea/
 *.swp
 *~

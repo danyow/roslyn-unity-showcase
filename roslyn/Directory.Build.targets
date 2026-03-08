@@ -1,0 +1,11 @@
+<Project>
+
+    <!--
+        在 .csproj 求值之后执行，此时 IsRoslynComponent 已可用。
+        将默认模式通过 DefineConstants 烘焙进生成器 DLL。
+    -->
+    <PropertyGroup Condition="'$(IsRoslynComponent)' == 'true' and '$(GenerateMode)' == 'AddSource'">
+        <DefineConstants>$(DefineConstants);DEFAULT_ADDSOURCE</DefineConstants>
+    </PropertyGroup>
+
+</Project>

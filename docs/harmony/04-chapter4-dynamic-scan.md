@@ -283,4 +283,10 @@ public class GameBootstrap : MonoBehaviour
 
 在实际项目中，你可以用 Roslyn Generator 减少 Harmony 补丁的数量（很多需要"钩子"的场景可以用生成器在设计期解决），同时在真正需要运行时干预的地方用 Harmony 补丁。两者配合，可以以极低的侵入性实现非常强大的代码扩展能力。
 
-**感谢你完成整个展示项目！** 现在你已经掌握了 Roslyn 增量生成器（8 关）和 HarmonyX 运行时补丁（4 章）的核心知识，可以把这些技术运用到你的实际 Unity 项目中了。
+---
+
+## 下一章预告
+
+**第 5 章 — 实战：为 Debug.Log 添加带颜色的前缀**
+
+前四章掌握了 Harmony 的全部核心 API。下一章用一个来自真实项目的完整案例，综合运用手动 `Patch` + `AccessTools` + `ref` 参数篡改，为 Unity 内置的 `Debug.Log` / `LogWarning` / `LogError` 全局注入颜色前缀——无需修改项目中任何一行现有代码。

@@ -37,9 +37,7 @@ showcase/
 ├── game/                           # Unity 项目（6000.0.x）
 │   └── Assets/
 │       ├── Generators/LevelX/      # 生成器 DLL（RoslynAnalyzer 标签）
-│       ├── Showcase/LevelX/        # 演示脚本
-│       ├── csc.rsp                 # 编译器响应文件（模式切换）
-│       └── showcase.analyzerconfig # 分析器配置
+│       └── Showcase/LevelX/        # 演示脚本
 └── docs/                           # 文档
 ```
 
@@ -247,49 +245,81 @@ else
 }
 ```
 
-`ParseMode` 的逻辑：
-- `"AddSource"` → AddSource 模式
-- `"WriteFile"` 或 `null`/空 → **默认 WriteFile 模式**
+### 编译期烘焙默认模式
 
-### 在 dotnet build 中切换模式
+Unity 不使用 MSBuild 系统，无法通过 `build_property.*` 向生成器传递配置（`csc.rsp` + `analyzerconfig` 实测不生效）。
 
-dotnet 项目通过 MSBuild 属性传递：
+解决方案：**在构建生成器 DLL 时，通过 `DefineConstants` 将默认模式烘焙进 DLL**。当 Unity 侧读不到 `build_property.GenerateMode` 时，生成器自动使用编译期确定的默认值。
+
+```
+Rider: Debug 构建   → DLL 默认 AddSource → 拷贝到 Unity → 生成器用 AddSource
+Rider: Release 构建 → DLL 默认 WriteFile → 拷贝到 Unity → 生成器用 WriteFile
+```
+
+#### Directory.Build.props（集中配置）
+
+所有项目的 `GenerateMode` 在 `roslyn/Directory.Build.props` 中统一管理：
 
 ```xml
-<!-- Tests.csproj -->
-<PropertyGroup>
-    <GenerateMode>AddSource</GenerateMode>
-</PropertyGroup>
-<ItemGroup>
-    <CompilerVisibleProperty Include="GenerateMode" />
-</ItemGroup>
+<Project>
+    <!-- Debug → AddSource, Release → WriteFile, CLI 可覆盖 -->
+    <PropertyGroup Condition="'$(GenerateMode)' == ''">
+        <GenerateMode Condition="'$(Configuration)' == 'Release'">WriteFile</GenerateMode>
+        <GenerateMode Condition="'$(Configuration)' != 'Release'">AddSource</GenerateMode>
+    </PropertyGroup>
+
+    <!-- 生成器项目：烘焙默认模式 -->
+    <PropertyGroup Condition="'$(IsRoslynComponent)' == 'true' and '$(GenerateMode)' == 'AddSource'">
+        <DefineConstants>$(DefineConstants);DEFAULT_ADDSOURCE</DefineConstants>
+    </PropertyGroup>
+
+    <!-- 消费者项目（Tests 等）：暴露为 build_property -->
+    <ItemGroup Condition="'$(IsRoslynComponent)' != 'true'">
+        <CompilerVisibleProperty Include="GenerateMode" />
+    </ItemGroup>
+</Project>
 ```
 
-`CompilerVisibleProperty` 将 MSBuild 属性暴露为 `build_property.GenerateMode`，生成器通过 `AnalyzerConfigOptionsProvider.GlobalOptions` 读取。
+#### GeneratorConfig 的默认值逻辑
 
-### 在 Unity 中切换模式
+```csharp
+private static GenerateMode DefaultMode =>
+#if DEFAULT_ADDSOURCE
+    GenerateMode.AddSource;
+#else
+    GenerateMode.WriteFile;
+#endif
 
-Unity **不读取** `.globalconfig` 文件，也不使用 MSBuild 系统。传递 `build_property.*` 给 Roslyn 编译器的方法是通过 **`csc.rsp`**：
+public static GenerateMode ParseMode(string? mode)
+{
+    if (string.IsNullOrEmpty(mode))
+        return DefaultMode;  // Unity 侧走这里
 
-**`Assets/csc.rsp`**（Unity 自动读取的编译器响应文件）：
+    return mode!.ToLowerInvariant() switch
+    {
+        "addsource" => GenerateMode.AddSource,
+        "writefile" => GenerateMode.WriteFile,
+        "file"      => GenerateMode.WriteFile,
+        _           => DefaultMode,
+    };
+}
 ```
--analyzerconfig:Assets/showcase.analyzerconfig
-```
 
-**`Assets/showcase.analyzerconfig`**：
-```ini
-is_global = true
-build_property.GenerateMode = AddSource
-```
+优先级：MSBuild `build_property`（dotnet build / Tests）> 编译期烘焙默认值（Unity）
 
-`-analyzerconfig:` 是标准的 Roslyn 编译器参数，显式告诉编译器读取指定的分析器配置文件。这不依赖 `.globalconfig` 的自动发现机制。
+### 切换模式
 
-**切换方式：**
+在 Rider / `dotnet build` 中切换 Configuration 即可：
 
-| 目标模式 | 操作 |
-|---------|------|
-| WriteFile | 删除或清空 `csc.rsp` 内容，重新打开 Unity |
-| AddSource | 在 `csc.rsp` 中添加 `-analyzerconfig:` 行，删除已有的 `.g.cs` 文件 |
+| 操作 | 效果 |
+|------|------|
+| Rider 选择 **Debug** 构建（或 `dotnet build`） | 生成器 DLL 默认 AddSource |
+| Rider 选择 **Release** 构建（或 `dotnet build -c Release`） | 生成器 DLL 默认 WriteFile |
+| CLI 覆盖 `dotnet build -p:GenerateMode=WriteFile` | 忽略 Configuration，强制指定模式 |
+
+构建完成后 PostBuild 自动将 DLL 拷贝到 Unity，切回 Unity 窗口即触发重编译。
+
+> **注意**：从 WriteFile 切换到 AddSource 后，需要手动删除之前生成的 `.g.cs` 物理文件，否则会与内存注入的代码产生重复定义冲突。
 
 > WriteFile 模式下生成的 `.g.cs` 文件内容变化时才会写入，避免触发无限编译循环。
 
@@ -602,7 +632,9 @@ git clone <repo> && cd showcase
 
 # 2. 构建所有生成器（DLL 自动复制到 Unity）
 cd roslyn
-dotnet build showcase.sln
+dotnet build showcase.sln              # Debug → 默认 AddSource
+# 或
+dotnet build showcase.sln -c Release   # Release → 默认 WriteFile
 
 # 3. 用 Unity 6000.0.x 打开 game/ 目录
 
@@ -612,17 +644,18 @@ dotnet build showcase.sln
 #    - 运行各 Level 的 Scene 查看效果
 ```
 
-**切换 Unity 生成模式**：
+**切换 Unity 生成模式**（通过重新构建生成器 DLL）：
 
 ```bash
-# WriteFile 模式（默认）：生成器写物理 .g.cs 文件
-# 清空 csc.rsp 即可（或删除该文件）
+cd roslyn
 
 # AddSource 模式：代码注入编译管道，无物理文件
-# 在 Assets/csc.rsp 中添加：
-echo '-analyzerconfig:Assets/showcase.analyzerconfig' > game/Assets/csc.rsp
-# 并删除已有的 .g.cs 文件
-find game/Assets/Showcase -name "*.g.cs" -delete
+dotnet build showcase.sln
+# 需要删除之前 WriteFile 模式生成的 .g.cs 文件
+find ../game/Assets/Showcase -name "*.g.cs" -delete
+
+# WriteFile 模式：生成器写物理 .g.cs 文件
+dotnet build showcase.sln -c Release
 ```
 
 ---

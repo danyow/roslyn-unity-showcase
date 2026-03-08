@@ -7,13 +7,10 @@
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
-    <!-- Tests 始终用 AddSource，物理文件由 Unity 生成 -->
+    <!-- Tests 始终用 AddSource：源文件从 game/ 链接，WriteFile 会写入 game 目录 -->
     <PropertyGroup>
         <GenerateMode>AddSource</GenerateMode>
     </PropertyGroup>
-    <ItemGroup>
-        <CompilerVisibleProperty Include="GenerateMode" />
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
@@ -36,7 +33,7 @@
         </PackageReference>
     </ItemGroup>
 
-    <!-- 包含 game 源文件让所有生成器能处理，Release 时生成物理 .g.cs -->
+    <!-- 包含 game 源文件让所有生成器能处理 -->
     <ItemGroup>
         <ProjectReference Include="..\Core\Core.csproj" />
     </ItemGroup>

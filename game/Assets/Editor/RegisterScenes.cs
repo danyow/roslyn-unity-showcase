@@ -13,7 +13,7 @@ namespace Showcase.Editor
             "Main",
             "Level0", "Level1", "Level2", "Level3",
             "Level4", "Level5", "Level6", "Level7",
-            "Chapter1", "Chapter2", "Chapter3", "Chapter4",
+            "Chapter1", "Chapter2", "Chapter3", "Chapter4", "Chapter5",
         };
 
         // Component type names for each scene's Demo GameObject
@@ -32,6 +32,7 @@ namespace Showcase.Editor
             "Showcase.HarmonyDemo.Chapter2.Chapter2Demo",
             "Showcase.HarmonyDemo.Chapter3.Chapter3Demo",
             "Showcase.HarmonyDemo.Chapter4.Chapter4Demo",
+            "Showcase.HarmonyDemo.Chapter5.Chapter5Demo",
         };
 
         [MenuItem("Showcase/Create All Scenes")]

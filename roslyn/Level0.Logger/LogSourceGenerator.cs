@@ -126,6 +126,7 @@ public class LogSourceGenerator : IIncrementalGenerator
 
     /// <summary>
     /// 静态模式：生成 private static class Debug（适合非 MonoBehaviour 类）
+    /// 带颜色前缀：Log 绿色、LogWarning 黄色、LogError 红色
     /// </summary>
     private static string BuildStaticModeSource(string ns, string typeName, string targetName)
     {
@@ -143,15 +144,25 @@ public class LogSourceGenerator : IIncrementalGenerator
 {{indent}}    {
 {{indent}}        private const string Tag = "{{targetName}}";
 
+#if UNITY_EDITOR
+{{indent}}        private const string LogPrefix = "<color=#00FF00FF>[{{targetName}}]</color>";
+{{indent}}        private const string WarningPrefix = "<color=#FFFF00FF>[{{targetName}}]</color>";
+{{indent}}        private const string ErrorPrefix = "<color=#FF0000FF>[{{targetName}}]</color>";
+#else
+{{indent}}        private const string LogPrefix = "[{{targetName}}]";
+{{indent}}        private const string WarningPrefix = "[{{targetName}}]";
+{{indent}}        private const string ErrorPrefix = "[{{targetName}}]";
+#endif
+
 {{indent}}        [System.Diagnostics.Conditional("UNITY_EDITOR")]
 {{indent}}        public static void Log(object msg) =>
-{{indent}}            UnityEngine.Debug.Log($"[{Tag}] {msg}");
+{{indent}}            UnityEngine.Debug.Log($"{LogPrefix} {msg}");
 
 {{indent}}        public static void LogWarning(object msg) =>
-{{indent}}            UnityEngine.Debug.LogWarning($"[{Tag}] {msg}");
+{{indent}}            UnityEngine.Debug.LogWarning($"{WarningPrefix} {msg}");
 
 {{indent}}        public static void LogError(object msg) =>
-{{indent}}            UnityEngine.Debug.LogError($"[{Tag}] {msg}");
+{{indent}}            UnityEngine.Debug.LogError($"{ErrorPrefix} {msg}");
 
 {{indent}}        public static void LogException(System.Exception ex) =>
 {{indent}}            UnityEngine.Debug.LogException(ex);
@@ -163,6 +174,7 @@ public class LogSourceGenerator : IIncrementalGenerator
 
     /// <summary>
     /// Context 模式：生成 private class DebugContext（适合 MonoBehaviour，可绑定 GameObject）
+    /// 带颜色前缀：Log 绿色、LogWarning 黄色、LogError 红色
     /// </summary>
     private static string BuildContextModeSource(string ns, string typeName, string targetName)
     {
@@ -179,16 +191,32 @@ public class LogSourceGenerator : IIncrementalGenerator
 {{indent}}    private sealed class DebugContext
 {{indent}}    {
 {{indent}}        private readonly string _tag;
-{{indent}}        public DebugContext(string tag) => _tag = tag;
+{{indent}}        private readonly string _logPrefix;
+{{indent}}        private readonly string _warningPrefix;
+{{indent}}        private readonly string _errorPrefix;
+
+{{indent}}        public DebugContext(string tag)
+{{indent}}        {
+{{indent}}            _tag = tag;
+#if UNITY_EDITOR
+{{indent}}            _logPrefix = $"<color=#00FF00FF>[{tag}]</color>";
+{{indent}}            _warningPrefix = $"<color=#FFFF00FF>[{tag}]</color>";
+{{indent}}            _errorPrefix = $"<color=#FF0000FF>[{tag}]</color>";
+#else
+{{indent}}            _logPrefix = $"[{tag}]";
+{{indent}}            _warningPrefix = $"[{tag}]";
+{{indent}}            _errorPrefix = $"[{tag}]";
+#endif
+{{indent}}        }
 
 {{indent}}        public void Log(object msg) =>
-{{indent}}            UnityEngine.Debug.Log($"[{_tag}] {msg}");
+{{indent}}            UnityEngine.Debug.Log($"{_logPrefix} {msg}");
 
 {{indent}}        public void LogWarning(object msg) =>
-{{indent}}            UnityEngine.Debug.LogWarning($"[{_tag}] {msg}");
+{{indent}}            UnityEngine.Debug.LogWarning($"{_warningPrefix} {msg}");
 
 {{indent}}        public void LogError(object msg) =>
-{{indent}}            UnityEngine.Debug.LogError($"[{_tag}] {msg}");
+{{indent}}            UnityEngine.Debug.LogError($"{_errorPrefix} {msg}");
 
 {{indent}}        public void LogException(System.Exception ex) =>
 {{indent}}            UnityEngine.Debug.LogException(ex);

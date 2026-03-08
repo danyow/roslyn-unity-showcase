@@ -1,0 +1,19 @@
+<Project>
+
+    <!--
+        集中管理 GenerateMode（AddSource / WriteFile）
+        - Debug   → AddSource（内存注入，适合开发/测试）
+        - Release → WriteFile（物理文件，适合 Unity）
+        - CLI 覆盖：dotnet build -p:GenerateMode=WriteFile
+    -->
+    <PropertyGroup Condition="'$(GenerateMode)' == ''">
+        <GenerateMode Condition="'$(Configuration)' == 'Release'">WriteFile</GenerateMode>
+        <GenerateMode Condition="'$(Configuration)' != 'Release'">AddSource</GenerateMode>
+    </PropertyGroup>
+
+    <!-- 消费者项目（Tests 等）：将 GenerateMode 暴露为 build_property -->
+    <ItemGroup Condition="'$(IsRoslynComponent)' != 'true'">
+        <CompilerVisibleProperty Include="GenerateMode" />
+    </ItemGroup>
+
+</Project>

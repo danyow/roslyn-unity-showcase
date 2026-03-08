@@ -25,6 +25,7 @@ namespace Showcase
             "Chapter2 - Transpiler",
             "Chapter3 - Finalizer",
             "Chapter4 - AutoPatch",
+            "Chapter5 - DebugLog Color",
         };
 
         private void OnGUI()

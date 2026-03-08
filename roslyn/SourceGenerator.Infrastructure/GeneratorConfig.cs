@@ -24,19 +24,32 @@ namespace SourceGenerator.Infrastructure
         public string FileExtension { get; set; } = ".g.cs";
 
         /// <summary>
+        /// 编译期烘焙的默认模式：
+        /// Debug 构建定义 DEFAULT_ADDSOURCE → 默认 AddSource
+        /// Release 构建不定义 → 默认 WriteFile
+        /// Unity 侧无法传递 build_property 时自动使用此默认值
+        /// </summary>
+        private static GenerateMode DefaultMode =>
+#if DEFAULT_ADDSOURCE
+            GenerateMode.AddSource;
+#else
+            GenerateMode.WriteFile;
+#endif
+
+        /// <summary>
         /// 解析 MSBuild 属性中的生成模式
         /// </summary>
         public static GenerateMode ParseMode(string? mode)
         {
             if (string.IsNullOrEmpty(mode))
-                return GenerateMode.WriteFile;
+                return DefaultMode;
 
             return mode!.ToLowerInvariant() switch
             {
                 "addsource" => GenerateMode.AddSource,
                 "writefile" => GenerateMode.WriteFile,
                 "file" => GenerateMode.WriteFile,
-                _ => GenerateMode.WriteFile,
+                _ => DefaultMode,
             };
         }
     }
